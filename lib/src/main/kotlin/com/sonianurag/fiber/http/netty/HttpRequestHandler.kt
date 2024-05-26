@@ -52,7 +52,7 @@ class HttpRequestHandler(private val handler: suspend (Request) -> Response) : C
                 val bodyChannel = Channel<Buf>()
                 val bodyDrained = CompletableDeferred<Unit>()
                 bodyChannel.invokeOnClose {
-                    bodyDrained.complete(Unit)
+                    ctx.read()
                 }
                 val bodyHandler =
                     BodyHandler(dispatcher, FiberByteBufAllocator.DEFAULT, bodyChannel)
@@ -89,8 +89,6 @@ class HttpRequestHandler(private val handler: suspend (Request) -> Response) : C
                     }
 
                     bodyHandler.drain()
-                    bodyDrained.await()
-                    ctx.read()
                 }
             }
 
