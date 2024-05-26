@@ -1,5 +1,6 @@
 package com.sonianurag.fiber.transport
 
+import com.sonianurag.fiber.net.Address
 import io.netty.channel.ChannelFactory
 import io.netty.channel.EventLoopGroup
 import io.netty.channel.ServerChannel
@@ -15,7 +16,7 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.util.concurrent.DefaultThreadFactory
 
-interface NettyTransport {
+internal interface NettyTransport {
     fun isAvailable(): Boolean
 
     val serverInetChannelFactory: ChannelFactory<out ServerChannel>
@@ -34,7 +35,14 @@ interface NettyTransport {
     }
 }
 
-object EpollTransport : NettyTransport {
+internal fun NettyTransport.socketChannelForAddress(address: Address): ChannelFactory<out ServerChannel> {
+    return when (address) {
+        is Address.HostAndPort -> this.serverInetChannelFactory
+        is Address.Unix -> this.serverDomainChannelFactory
+    }
+}
+
+internal object EpollTransport : NettyTransport {
     override fun isAvailable(): Boolean {
         return Epoll.isAvailable()
     }
@@ -57,7 +65,7 @@ object EpollTransport : NettyTransport {
     }
 }
 
-object KqueueTransport : NettyTransport {
+internal object KqueueTransport : NettyTransport {
     override fun isAvailable(): Boolean {
         return KQueue.isAvailable()
     }
@@ -80,7 +88,7 @@ object KqueueTransport : NettyTransport {
     }
 }
 
-object NioTransport : NettyTransport {
+internal object NioTransport : NettyTransport {
     override fun isAvailable(): Boolean {
         return true
     }

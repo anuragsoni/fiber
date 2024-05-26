@@ -1,14 +1,12 @@
 package com.sonianurag.fiber.buffer
 
-import io.netty.buffer.AbstractByteBufAllocator
-import io.netty.buffer.ByteBuf
-import io.netty.buffer.ByteBufAllocator
-import io.netty.buffer.UnpooledByteBufAllocator
+import io.netty.buffer.*
 import io.netty.util.internal.PlatformDependent
 
 class FiberByteBufAllocator : AbstractByteBufAllocator() {
     companion object {
         val unpooledAllocator: ByteBufAllocator = UnpooledByteBufAllocator(false)
+        val pooledAllocator: ByteBufAllocator = PooledByteBufAllocator(true)
         val DEFAULT = FiberByteBufAllocator()
     }
 
