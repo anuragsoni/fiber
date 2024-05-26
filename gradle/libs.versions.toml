@@ -12,6 +12,7 @@ netty = "4.1.110.Final"
 netty-iouring = "0.0.25.Final"
 slf4j-api = "2.0.13"
 version-catalog-update = "0.8.4"
+logback = "1.5.6"
 versions-plugin = "0.51.0"
 
 [libraries]
@@ -22,6 +23,7 @@ kotlin-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.re
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 netty-all = { module = "io.netty:netty-all", version.ref = "netty" }
+logback-core = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 netty-iouring = { module = "io.netty.incubator:netty-incubator-transport-native-io_uring", version.ref = "netty-iouring" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j-api" }
 

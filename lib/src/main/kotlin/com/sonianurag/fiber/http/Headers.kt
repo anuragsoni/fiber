@@ -3,11 +3,15 @@ package com.sonianurag.fiber.http
 import io.netty.handler.codec.http.DefaultHttpHeadersFactory
 import io.netty.handler.codec.http.HttpHeaders
 
-class Headers {
+class Headers : Iterable<Map.Entry<String, String>> {
     private val headers: HttpHeaders = DefaultHttpHeadersFactory.headersFactory().newHeaders()
 
     fun isEmpty(): Boolean {
         return headers.isEmpty
+    }
+
+    override fun iterator(): Iterator<Map.Entry<String, String>> {
+        return headers.iteratorAsString()
     }
 
     fun size(): Int {

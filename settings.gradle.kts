@@ -3,4 +3,4 @@ plugins {
 }
 
 rootProject.name = "fiber"
-include("lib")
+include("lib", "example")

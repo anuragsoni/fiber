@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    implementation(libs.kotlinx.coroutines)
+    api(libs.kotlinx.coroutines)
     implementation(libs.netty.all)
     implementation(libs.netty.iouring)
     implementation(libs.slf4j.api)
