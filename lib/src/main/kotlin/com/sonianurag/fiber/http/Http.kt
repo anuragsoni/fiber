@@ -10,6 +10,7 @@ import com.sonianurag.fiber.net.toSocketAddress
 import com.sonianurag.fiber.transport.NettyTransport
 import com.sonianurag.fiber.transport.socketChannelForAddress
 import io.netty.bootstrap.ServerBootstrap
+import io.netty.buffer.PooledByteBufAllocator
 import io.netty.channel.Channel
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
@@ -20,6 +21,7 @@ import kotlinx.coroutines.Deferred
 import org.slf4j.LoggerFactory
 import java.net.BindException
 import java.net.SocketAddress
+import kotlin.math.max
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 
@@ -27,7 +29,7 @@ object Http {
     fun createServer(
         whereToListen: Address,
         backlog: Int = 128,
-        workerThreads: Int? = null,
+        workerThreads: Int = max(0, Runtime.getRuntime().availableProcessors() - 1),
         tcpNoDelay: Boolean = true,
         connectTimeout: Duration? = null,
         keepAlive: Boolean = true,
@@ -38,20 +40,24 @@ object Http {
         require(backlog > 0) { "backlog must be > 0" }
         require(receiveBufferSize > 0) { "receiveBufferSize must be > 0" }
         require(sendBufferSize > 0) { "sendBufferSize must be > 0" }
-        require(workerThreads == null || workerThreads >= 1) {
-            "workerThreads must either be null or >= 1"
+        require(workerThreads >= 0) {
+            "workerThreads must either be >= 0"
         }
         val logger = LoggerFactory.getLogger("fiber/tcp")
         val bootstrap = ServerBootstrap()
         val transport = NettyTransport.default()
         val bossGroup = transport.eventLoopGroup(1, false, "fiber/server.acceptor")
-        val childGroup =
-            workerThreads?.let { transport.eventLoopGroup(it, true, "fiber/server.worker") }
+        val childGroup = if (workerThreads > 0) {
+            transport.eventLoopGroup(workerThreads, true, "fiber/server.worker")
+        } else {
+            null
+        }
         when (childGroup) {
             null -> bootstrap.group(bossGroup)
             else -> bootstrap.group(bossGroup, childGroup)
         }
         bootstrap.option(ChannelOption.SO_BACKLOG, backlog)
+        bootstrap.childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
         bootstrap.childOption(ChannelOption.TCP_NODELAY, tcpNoDelay)
         bootstrap.childOption(ChannelOption.SO_KEEPALIVE, keepAlive)
         connectTimeout?.let {
