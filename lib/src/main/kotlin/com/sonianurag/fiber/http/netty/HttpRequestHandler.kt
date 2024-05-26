@@ -12,11 +12,11 @@ import io.netty.handler.codec.http.DefaultHttpContent
 import io.netty.handler.codec.http.HttpContent
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.LastHttpContent
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -50,7 +50,6 @@ class HttpRequestHandler(private val handler: suspend (Request) -> Response) : C
             is HttpRequest -> {
                 val dispatcher = ctx.executor().asCoroutineDispatcher()
                 val bodyChannel = Channel<Buf>()
-                val bodyDrained = CompletableDeferred<Unit>()
                 bodyChannel.invokeOnClose {
                     ctx.read()
                 }
@@ -59,7 +58,19 @@ class HttpRequestHandler(private val handler: suspend (Request) -> Response) : C
                 ctx.pipeline()
                     .addAfter(PipelineStages.HTTP_REQUEST_DECODER, PipelineStages.HTTP_BODY_HANDLER, bodyHandler)
 
-                val request = msg.toRequest(bodyChannel.consumeAsFlow())
+                val requestBody = flow {
+                    ctx.read()
+                    try {
+                        val message = bodyChannel.receive()
+                        emit(message)
+                    } catch (e: Exception) {
+                        when (e) {
+                            is ClosedReceiveChannelException -> return@flow
+                            else -> throw e
+                        }
+                    }
+                }
+                val request = msg.toRequest(requestBody)
                 CoroutineScope(dispatcher).launch {
                     val response = handler(request)
                     when (val responseBody = response.body) {

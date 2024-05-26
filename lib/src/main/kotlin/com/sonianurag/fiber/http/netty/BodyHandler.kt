@@ -69,7 +69,6 @@ class BodyHandler(
 
     override fun channelActive(ctx: ChannelHandlerContext) {
         logger.trace("{} activated", ctx.name())
-        ctx.read()
     }
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
@@ -96,7 +95,6 @@ class BodyHandler(
                 launch {
                     try {
                         state.maybeSend(msg)
-                        ctx.read()
                     } catch (e: Exception) {
                         ctx.fireExceptionCaught(e)
                     }
