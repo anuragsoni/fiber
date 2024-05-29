@@ -10,8 +10,8 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.handler.codec.http.*
 import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -21,8 +21,10 @@ import kotlinx.coroutines.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class HttpRequestHandler(private val handler: suspend (Request) -> Response) :
-    ChannelInboundHandlerAdapter() {
+class HttpRequestHandler(
+    override val coroutineContext: CoroutineContext,
+    private val handler: suspend (Request) -> Response
+) : ChannelInboundHandlerAdapter(), CoroutineScope {
     private val logger: Logger = LoggerFactory.getLogger(HttpRequestHandler::class.java)
 
     override fun channelActive(ctx: ChannelHandlerContext) {
@@ -90,11 +92,11 @@ class HttpRequestHandler(private val handler: suspend (Request) -> Response) :
     private fun processRequest(ctx: ChannelHandlerContext, msg: HttpRequest) {
         when (msg.protocolVersion()) {
             HttpVersion.HTTP_1_1 -> {
-                val dispatcher = ctx.executor().asCoroutineDispatcher()
+
                 val bodyChannel = Channel<Buf>()
                 bodyChannel.invokeOnClose { ctx.read() }
                 val bodyHandler =
-                    BodyHandler(dispatcher, FiberByteBufAllocator.DEFAULT, bodyChannel)
+                    BodyHandler(coroutineContext, FiberByteBufAllocator.DEFAULT, bodyChannel)
                 ctx.pipeline()
                     .addAfter(
                         PipelineStages.HTTP_REQUEST_DECODER,
@@ -103,7 +105,7 @@ class HttpRequestHandler(private val handler: suspend (Request) -> Response) :
                     )
                 val requestBody = createBodyStream(ctx, bodyChannel)
                 val request = msg.toRequest(requestBody)
-                CoroutineScope(dispatcher).launch {
+                launch {
                     val response = handler(request)
                     sendResponse(ctx, response)
                     bodyHandler.drain()

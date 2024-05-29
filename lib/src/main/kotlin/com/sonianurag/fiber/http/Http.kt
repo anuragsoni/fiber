@@ -23,6 +23,7 @@ import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.asCoroutineDispatcher
 import org.slf4j.LoggerFactory
 
 object Http {
@@ -80,7 +81,10 @@ object Http {
                     pipeline.addLast(PipelineStages.HTTP_RESPONSE_ENCODER, HttpResponseEncoder())
                     pipeline.addLast(
                         PipelineStages.HTTP_REQUEST_HANDLER,
-                        HttpRequestHandler(handler = service)
+                        HttpRequestHandler(
+                            coroutineContext = ch.eventLoop().asCoroutineDispatcher(),
+                            handler = service
+                        )
                     )
                 }
             }
