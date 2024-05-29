@@ -17,7 +17,6 @@ internal fun Buf.toNettyByteBuf(ctx: ChannelHandlerContext): ByteBuf {
 internal fun HttpVersion.toVersion(): Version {
     return when (this) {
         HttpVersion.HTTP_1_1 -> Version.Http11
-        HttpVersion.HTTP_1_0 -> Version.Http10
         else -> throw IllegalArgumentException("Unexpected http version: ${this.text()}")
     }
 }
@@ -25,7 +24,6 @@ internal fun HttpVersion.toVersion(): Version {
 internal fun Version.toNettyVersion(): HttpVersion {
     return when (this) {
         Version.Http11 -> HttpVersion.HTTP_1_1
-        Version.Http10 -> HttpVersion.HTTP_1_0
         else -> throw IllegalArgumentException("Http version not supported")
     }
 }

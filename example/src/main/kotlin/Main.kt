@@ -1,6 +1,6 @@
 import com.sonianurag.fiber.http.Body
 import com.sonianurag.fiber.http.Http
-import com.sonianurag.fiber.http.respond
+import com.sonianurag.fiber.http.Response
 import com.sonianurag.fiber.net.Address
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
@@ -14,8 +14,8 @@ fun main() {
     val logger = LoggerFactory.getLogger("example")
     runBlocking {
         val server =
-            Http.createServer(Address.HostAndPort(host = "localhost", port = 8080)) { request ->
-                request.respond(payload)
+            Http.createServer(Address.HostAndPort(host = "localhost", port = 8080)) {
+                Response.create(payload)
             }
         logger.info("Listening on: {}", server.listeningOn)
         server.closed().await()

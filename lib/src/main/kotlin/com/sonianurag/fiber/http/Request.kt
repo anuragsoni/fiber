@@ -1,22 +1,19 @@
 package com.sonianurag.fiber.http
 
+/** Interface representing an HTTP request. */
 interface Request {
+    /** HTTP version associated with the request. */
     val version: Version
-    val method: Method
-    val uri: String
-    val headers: Headers
-    val body: Body
-}
 
-fun Request.respond(
-    body: Body,
-    statusCode: StatusCode = StatusCode.OK,
-    headers: Headers = Headers()
-): Response {
-    return object : Response {
-        override val statusCode: StatusCode = statusCode
-        override val headers: Headers = headers
-        override val version: Version = this@respond.version
-        override val body: Body = body
-    }
+    /** HTTP method associated with the request. */
+    val method: Method
+
+    /** URI associated with the request. */
+    val uri: String
+
+    /** Header map associated with the request. */
+    val headers: Headers
+
+    /** Body associated with the request. */
+    val body: Body
 }
