@@ -1,6 +1,4 @@
-plugins {
-    application
-}
+plugins { application }
 
 dependencies {
     implementation(project(":lib"))

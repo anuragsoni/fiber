@@ -35,7 +35,9 @@ internal interface NettyTransport {
     }
 }
 
-internal fun NettyTransport.socketChannelForAddress(address: Address): ChannelFactory<out ServerChannel> {
+internal fun NettyTransport.socketChannelForAddress(
+    address: Address
+): ChannelFactory<out ServerChannel> {
     return when (address) {
         is Address.HostAndPort -> this.serverInetChannelFactory
         is Address.Unix -> this.serverDomainChannelFactory

@@ -8,19 +8,18 @@ import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.handler.codec.http.HttpContent
 import io.netty.handler.codec.http.LastHttpContent
 import io.netty.util.ReferenceCountUtil
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import kotlin.coroutines.CoroutineContext
 
 class BodyHandler(
     override val coroutineContext: CoroutineContext,
     private val allocator: ByteBufAllocator,
     writer: SendChannel<Buf>
-) :
-    CoroutineScope, ChannelInboundHandlerAdapter() {
+) : CoroutineScope, ChannelInboundHandlerAdapter() {
     private val logger: Logger = LoggerFactory.getLogger(BodyHandler::class.java)
 
     init {
@@ -29,6 +28,7 @@ class BodyHandler(
 
     sealed class State {
         data object Inactive : State()
+
         class Active(val writer: SendChannel<Buf>) : State()
     }
 
@@ -51,7 +51,6 @@ class BodyHandler(
             is State.Inactive -> {
                 ReferenceCountUtil.release(msg)
             }
-
             is State.Active -> {
                 val buf = msg.content()
                 val newBuffer =
@@ -90,7 +89,6 @@ class BodyHandler(
                     }
                 }
             }
-
             is HttpContent -> {
                 launch {
                     try {
@@ -100,10 +98,10 @@ class BodyHandler(
                     }
                 }
             }
-
-            else -> throw IllegalArgumentException(
-                "Expecting to read Http Content but received: ${msg::class.java.name}"
-            )
+            else ->
+                throw IllegalArgumentException(
+                    "Expecting to read Http Content but received: ${msg::class.java.name}"
+                )
         }
     }
 }

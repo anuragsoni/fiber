@@ -1,11 +1,11 @@
 package com.sonianurag.fiber.buffer
 
-import net.jqwik.api.ForAll
-import net.jqwik.api.Property
-import org.junit.jupiter.api.assertThrows
 import java.nio.ByteBuffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import net.jqwik.api.ForAll
+import net.jqwik.api.Property
+import org.junit.jupiter.api.assertThrows
 
 class BufTest {
     @Property
@@ -16,17 +16,13 @@ class BufTest {
     @Test
     fun `copy verifies the destination bytearray size`() {
         val buf = Buf.string("hello world")
-        assertThrows<IllegalArgumentException> {
-            buf.copyTo(byteArrayOf(), 0)
-        }
+        assertThrows<IllegalArgumentException> { buf.copyTo(byteArrayOf(), 0) }
     }
 
     @Test
     fun `copy verifies the destination bytebuffer size`() {
         val buf = Buf.string("hello world")
         val destination = ByteBuffer.allocate(2)
-        assertThrows<IllegalArgumentException> {
-            buf.copyTo(destination)
-        }
+        assertThrows<IllegalArgumentException> { buf.copyTo(destination) }
     }
 }

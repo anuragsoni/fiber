@@ -46,7 +46,8 @@ internal fun HttpRequest.toRequest(bodyReader: Flow<Buf>): Request {
 internal fun Response.toNettyResponse(): HttpResponse {
     val nettyResponse =
         DefaultHttpResponse(
-            this.version.toNettyVersion(), HttpResponseStatus.valueOf(this.statusCode.code)
+            this.version.toNettyVersion(),
+            HttpResponseStatus.valueOf(this.statusCode.code)
         )
     this.headers.forEach { entry -> nettyResponse.headers().add(entry.key, entry.value) }
     return nettyResponse
@@ -55,7 +56,9 @@ internal fun Response.toNettyResponse(): HttpResponse {
 internal fun Response.toFullNettyResponse(content: ByteBuf): HttpResponse {
     val nettyResponse =
         DefaultFullHttpResponse(
-            this.version.toNettyVersion(), HttpResponseStatus.valueOf(this.statusCode.code), content
+            this.version.toNettyVersion(),
+            HttpResponseStatus.valueOf(this.statusCode.code),
+            content
         )
     this.headers.forEach { entry -> nettyResponse.headers().add(entry.key, entry.value) }
     return nettyResponse

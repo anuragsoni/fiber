@@ -57,7 +57,8 @@ interface Buf {
 
         fun byteArray(byteArray: ByteArray): Buf {
             val buffer =
-                FiberByteBufAllocator.DEFAULT.buffer(byteArray.size, byteArray.size).writeBytes(byteArray)
+                FiberByteBufAllocator.DEFAULT.buffer(byteArray.size, byteArray.size)
+                    .writeBytes(byteArray)
             return NettyBuf(buffer)
         }
 
@@ -96,7 +97,6 @@ internal class NettyBuf(private val byteBuf: ByteBuf) : ByteBufConvertible by by
             is NettyBuf -> {
                 byteBuf.writeBytes(buf.byteBuf)
             }
-
             else -> {
                 if (!buf.isEmpty()) {
                     val bytearray = ByteArray(buf.size)

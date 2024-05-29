@@ -12,6 +12,7 @@ import io.netty.handler.codec.http.DefaultHttpContent
 import io.netty.handler.codec.http.HttpContent
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.LastHttpContent
+import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
@@ -20,9 +21,9 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.IOException
 
-class HttpRequestHandler(private val handler: suspend (Request) -> Response) : ChannelInboundHandlerAdapter() {
+class HttpRequestHandler(private val handler: suspend (Request) -> Response) :
+    ChannelInboundHandlerAdapter() {
     private val logger: Logger = LoggerFactory.getLogger(HttpRequestHandler::class.java)
 
     override fun channelActive(ctx: ChannelHandlerContext) {
@@ -37,7 +38,6 @@ class HttpRequestHandler(private val handler: suspend (Request) -> Response) : C
                 logger.trace("IO Exception from netty", cause)
                 ctx?.close()
             }
-
             else -> {
                 ctx?.close()
                 logger.error("Unhandled exception in http handler", cause)
@@ -50,13 +50,15 @@ class HttpRequestHandler(private val handler: suspend (Request) -> Response) : C
             is HttpRequest -> {
                 val dispatcher = ctx.executor().asCoroutineDispatcher()
                 val bodyChannel = Channel<Buf>()
-                bodyChannel.invokeOnClose {
-                    ctx.read()
-                }
+                bodyChannel.invokeOnClose { ctx.read() }
                 val bodyHandler =
                     BodyHandler(dispatcher, FiberByteBufAllocator.DEFAULT, bodyChannel)
                 ctx.pipeline()
-                    .addAfter(PipelineStages.HTTP_REQUEST_DECODER, PipelineStages.HTTP_BODY_HANDLER, bodyHandler)
+                    .addAfter(
+                        PipelineStages.HTTP_REQUEST_DECODER,
+                        PipelineStages.HTTP_BODY_HANDLER,
+                        bodyHandler
+                    )
 
                 val requestBody = flow {
                     ctx.read()
@@ -79,20 +81,23 @@ class HttpRequestHandler(private val handler: suspend (Request) -> Response) : C
                             val nettyResponse = response.toNettyResponse()
                             ctx.writeAndFlush(nettyResponse).coAwait()
                         }
-
                         is Body.Fixed -> {
-                            response.headers.replace("Content-Length", responseBody.buf.size.toString())
-                            val nettyResponse = response.toFullNettyResponse(responseBody.buf.toNettyByteBuf(ctx))
+                            response.headers.replace(
+                                "Content-Length",
+                                responseBody.buf.size.toString()
+                            )
+                            val nettyResponse =
+                                response.toFullNettyResponse(responseBody.buf.toNettyByteBuf(ctx))
                             ctx.writeAndFlush(nettyResponse).coAwait()
                         }
-
                         is Body.Streaming -> {
                             response.headers.replace("Transfer-Encoding", "chunked")
                             val nettyResponse = response.toNettyResponse()
                             ctx.write(nettyResponse)
                             responseBody.reads.collect { buf ->
                                 if (!buf.isEmpty()) {
-                                    ctx.writeAndFlush(DefaultHttpContent(buf.toNettyByteBuf(ctx))).coAwait()
+                                    ctx.writeAndFlush(DefaultHttpContent(buf.toNettyByteBuf(ctx)))
+                                        .coAwait()
                                 }
                             }
                             ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
@@ -102,7 +107,6 @@ class HttpRequestHandler(private val handler: suspend (Request) -> Response) : C
                     bodyHandler.drain()
                 }
             }
-
             is HttpContent -> ctx.fireChannelRead(msg)
             else -> {
                 "Expecting to read Http Request or Content but received: ${msg::class.java.name}"

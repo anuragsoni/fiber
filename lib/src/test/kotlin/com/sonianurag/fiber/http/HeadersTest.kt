@@ -6,9 +6,7 @@ class HeadersTest {
     @Test
     fun `header operations`() {
         val headers = Headers()
-        assertTrue {
-            headers.isEmpty()
-        }
+        assertTrue { headers.isEmpty() }
 
         headers.addUnlessExists("foo", "bar")
         headers.add("foo", "baz")
@@ -18,7 +16,7 @@ class HeadersTest {
 
         assertContentEquals(
             expected = listOf("foo" to "bar", "foo" to "baz"),
-            actual = headers.asSequence().toList()
+            actual = headers.iterator().asSequence().map { it.key to it.value }.toList()
         )
 
         headers.add("hello", "world")
@@ -26,13 +24,13 @@ class HeadersTest {
 
         assertContentEquals(
             expected = listOf("hello" to "world"),
-            actual = headers.asSequence().toList()
+            actual = headers.iterator().asSequence().map { it.key to it.value }.toList()
         )
 
         headers.remove("doesNotExist")
         assertContentEquals(
             expected = listOf("hello" to "world"),
-            actual = headers.asSequence().toList()
+            actual = headers.iterator().asSequence().map { it.key to it.value }.toList()
         )
 
         assertEquals(expected = "world", actual = headers.get("HELLO"))
@@ -44,7 +42,7 @@ class HeadersTest {
         headers.replace("foo", "THIS IS A NEW KEY")
         assertContentEquals(expected = listOf("THIS IS A NEW KEY"), actual = headers.getAll("FoO"))
 
-        assertFalse { headers.contains("MISSING") }
+        assertFalse { headers.containsKey("MISSING") }
         assertContentEquals(expected = listOf(), headers.getAll("MISSING"))
 
         assertContentEquals(expected = listOf("hello", "foo"), actual = headers.names().toList())

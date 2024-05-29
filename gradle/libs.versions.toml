@@ -13,6 +13,7 @@ netty-iouring = "0.0.25.Final"
 slf4j-api = "2.0.13"
 version-catalog-update = "0.8.4"
 logback = "1.5.6"
+spotless = "6.25.0"
 versions-plugin = "0.51.0"
 
 [libraries]
@@ -33,3 +34,4 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 version-catalog-update = { id = "nl.littlerobots.version-catalog-update", version.ref = "version-catalog-update" }
 versions = { id = "com.github.ben-manes.versions", version.ref = "versions-plugin" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

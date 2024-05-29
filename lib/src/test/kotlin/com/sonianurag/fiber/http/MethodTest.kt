@@ -1,9 +1,9 @@
 package com.sonianurag.fiber.http
 
-import net.jqwik.api.*
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import net.jqwik.api.*
 
 class MethodTest {
     @Provide

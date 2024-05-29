@@ -446,19 +446,19 @@ value class StatusCode(val code: Int) {
 }
 
 /** Returns true if the status is in the range 100-199. */
-fun StatusCode.isInformational(): Boolean = code in 100..<200
+fun StatusCode.isInformational(): Boolean = code in 100 ..< 200
 
 /** Returns true if the status is in the range 200-299. */
-fun StatusCode.isSuccess(): Boolean = code in 200..<300
+fun StatusCode.isSuccess(): Boolean = code in 200 ..< 300
 
 /** Returns true if the status is in the range 300-399. */
-fun StatusCode.isRedirection(): Boolean = code in 300..<400
+fun StatusCode.isRedirection(): Boolean = code in 300 ..< 400
 
 /** Returns true if the status is in the range 400-499. */
-fun StatusCode.isClientError(): Boolean = code in 400..<500
+fun StatusCode.isClientError(): Boolean = code in 400 ..< 500
 
 /** Returns true if the status is in the range 500-599. */
-fun StatusCode.isServerError(): Boolean = code in 500..<600
+fun StatusCode.isServerError(): Boolean = code in 500 ..< 600
 
 /** Returns the standard reason-phrase for the status code. */
 fun StatusCode.reasonPhrase(): String = HttpResponseStatus.valueOf(code).reasonPhrase()

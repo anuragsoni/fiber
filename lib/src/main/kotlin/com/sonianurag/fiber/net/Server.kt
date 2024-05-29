@@ -1,7 +1,7 @@
 package com.sonianurag.fiber.net
 
-import kotlinx.coroutines.Deferred
 import java.net.SocketAddress
+import kotlinx.coroutines.Deferred
 
 interface Server : AutoCloseable {
     /** Address that the server is listening on. */

@@ -2,10 +2,10 @@ package com.sonianurag.fiber.utilities
 
 import io.netty.util.concurrent.Future
 import io.netty.util.concurrent.GenericFutureListener
-import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.concurrent.ExecutionException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlinx.coroutines.suspendCancellableCoroutine
 
 internal suspend fun <T> Future<T>.coAwait(): T {
     if (isDone) {
@@ -26,7 +26,8 @@ internal suspend fun <T> Future<T>.coAwait(): T {
                         cont.resumeWithException(e.cause ?: e)
                     }
                 }
-            })
+            }
+        )
         if (isCancellable) {
             cont.invokeOnCancellation { cancel(false) }
         }

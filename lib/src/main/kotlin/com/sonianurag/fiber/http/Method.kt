@@ -8,8 +8,8 @@ package com.sonianurag.fiber.http
 enum class Method {
     /**
      * The CONNECT method requests that the recipient establish a tunnel to the destination origin
-     * server identified by the request-target and, if successful, thereafter restrict its behavior to
-     * blind forwarding of packets, in both directions, until the tunnel is closed.
+     * server identified by the request-target and, if successful, thereafter restrict its behavior
+     * to blind forwarding of packets, in both directions, until the tunnel is closed.
      *
      * [RFC7231, Section 4.3.6](https://datatracker.ietf.org/doc/html/rfc7231#section-4.3.6)
      */
@@ -24,15 +24,16 @@ enum class Method {
     DELETE,
 
     /**
-     * The GET method requests transfer of a current selected representation for the target resource.
+     * The GET method requests transfer of a current selected representation for the target
+     * resource.
      *
      * [RFC7231, Section 4.3.1](https://datatracker.ietf.org/doc/html/rfc7231#section-4.3.1)
      */
     GET,
 
     /**
-     * The HEAD method is identical to GET except that the server MUST NOT send a message body in the
-     * response (i.e., the response terminates at the end of the header section).
+     * The HEAD method is identical to GET except that the server MUST NOT send a message body in
+     * the response (i.e., the response terminates at the end of the header section).
      *
      * [RFC7231, Section 4.3.2](https://datatracker.ietf.org/doc/html/rfc7231#section-4.3.2)
      */
@@ -107,7 +108,6 @@ fun Method.isSafe(): Boolean =
         Method.HEAD,
         Method.OPTIONS,
         Method.TRACE -> true
-
         else -> false
     }
 
@@ -124,7 +124,6 @@ fun Method.isIdempotent(): Boolean =
     when (this) {
         Method.PUT,
         Method.DELETE -> true
-
         else -> this.isSafe()
     }
 
@@ -141,6 +140,5 @@ fun Method.isCacheable(): Boolean =
         Method.GET,
         Method.HEAD,
         Method.POST -> true
-
         else -> false
     }
