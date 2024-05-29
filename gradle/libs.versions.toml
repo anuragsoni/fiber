@@ -8,12 +8,11 @@ junit-launcher = "1.10.2"
 kotlin = "2.0.0"
 kotlinx-coroutines = "1.8.1"
 kover = "0.8.0"
-netty = "4.1.110.Final"
-netty-iouring = "0.0.25.Final"
-slf4j-api = "2.0.13"
-version-catalog-update = "0.8.4"
 logback = "1.5.6"
+netty = "4.1.110.Final"
+slf4j-api = "2.0.13"
 spotless = "6.25.0"
+version-catalog-update = "0.8.4"
 versions-plugin = "0.51.0"
 
 [libraries]
@@ -23,15 +22,14 @@ junit-launcher = { module = "org.junit.platform:junit-platform-launcher", versio
 kotlin-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "kotlin" }
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
-netty-all = { module = "io.netty:netty-all", version.ref = "netty" }
 logback-core = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
-netty-iouring = { module = "io.netty.incubator:netty-incubator-transport-native-io_uring", version.ref = "netty-iouring" }
+netty-all = { module = "io.netty:netty-all", version.ref = "netty" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j-api" }
 
 [plugins]
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 version-catalog-update = { id = "nl.littlerobots.version-catalog-update", version.ref = "version-catalog-update" }
 versions = { id = "com.github.ben-manes.versions", version.ref = "versions-plugin" }
-spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

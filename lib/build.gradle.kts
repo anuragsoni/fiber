@@ -6,7 +6,6 @@ plugins {
 dependencies {
     api(libs.kotlinx.coroutines)
     implementation(libs.netty.all)
-    implementation(libs.netty.iouring)
     implementation(libs.slf4j.api)
     testImplementation(libs.jqwik.kotlin)
     testImplementation(libs.junit.jupiter.engine)
