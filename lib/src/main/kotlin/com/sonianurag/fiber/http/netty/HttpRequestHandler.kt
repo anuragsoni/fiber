@@ -93,7 +93,6 @@ class HttpRequestHandler(
         when (msg.protocolVersion()) {
             HttpVersion.HTTP_1_1 -> {
                 val bodyChannel = Channel<Buf>()
-                bodyChannel.invokeOnClose { ctx.read() }
                 val bodyHandler =
                     BodyHandler(coroutineContext, FiberByteBufAllocator.DEFAULT, bodyChannel)
                 ctx.pipeline()
@@ -103,7 +102,7 @@ class HttpRequestHandler(
                         bodyHandler
                     )
                 val requestBody = createBodyStream(ctx, bodyChannel)
-                val request = msg.toRequest(requestBody)
+                val request = msg.toRequest(Body.Streaming(requestBody))
                 launch {
                     val response = handler(request)
                     sendResponse(ctx, response)

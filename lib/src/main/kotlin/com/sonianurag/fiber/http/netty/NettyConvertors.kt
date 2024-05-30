@@ -5,7 +5,6 @@ import com.sonianurag.fiber.http.*
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
-import kotlinx.coroutines.flow.Flow
 
 internal fun Buf.toNettyByteBuf(ctx: ChannelHandlerContext): ByteBuf {
     val buffer = ctx.alloc().ioBuffer(this.size)
@@ -28,7 +27,7 @@ internal fun Version.toNettyVersion(): HttpVersion {
     }
 }
 
-internal fun HttpRequest.toRequest(bodyReader: Flow<Buf>): Request {
+internal fun HttpRequest.toRequest(body: Body): Request {
     return object : Request {
         override val version: Version = this@toRequest.protocolVersion().toVersion()
         override val method: Method = this@toRequest.method().name().toHttpMethod()
@@ -37,7 +36,7 @@ internal fun HttpRequest.toRequest(bodyReader: Flow<Buf>): Request {
             Headers().also { headers ->
                 this@toRequest.headers().forEach { entry -> headers.add(entry.key, entry.value) }
             }
-        override val body: Body = Body.Streaming(bodyReader)
+        override val body: Body = body
     }
 }
 

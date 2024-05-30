@@ -70,6 +70,10 @@ class BodyHandler(
         logger.trace("{} activated", ctx.name())
     }
 
+    override fun handlerRemoved(ctx: ChannelHandlerContext) {
+        ctx.read()
+    }
+
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
         when (msg) {
             is LastHttpContent -> {
