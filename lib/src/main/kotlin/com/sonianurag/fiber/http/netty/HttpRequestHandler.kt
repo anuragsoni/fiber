@@ -9,6 +9,8 @@ import com.sonianurag.fiber.utilities.coAwait
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.handler.codec.http.*
+import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
@@ -18,8 +20,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.IOException
-import kotlin.coroutines.CoroutineContext
 
 class HttpRequestHandler(
     override val coroutineContext: CoroutineContext,
@@ -125,9 +125,10 @@ class HttpRequestHandler(
         when (msg) {
             is HttpRequest -> processRequest(ctx, msg)
             is HttpContent -> ctx.fireChannelRead(msg)
-            else -> {
-                "Expecting to read Http Request or Content but received: ${msg::class.java.name}"
-            }
+            else ->
+                throw IllegalArgumentException(
+                    "Expecting to read Http Request or Content but received: ${msg::class.java.name}"
+                )
         }
     }
 }
