@@ -2,8 +2,11 @@ import com.sonianurag.fiber.http.Body
 import com.sonianurag.fiber.http.Http
 import com.sonianurag.fiber.http.Response
 import com.sonianurag.fiber.net.Address
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
+import kotlin.time.Duration.Companion.seconds
 
 val payload =
     Body.fromString(
@@ -18,6 +21,12 @@ fun main() {
                 Response.create(payload)
             }
         logger.info("Listening on: {}", server.listeningOn)
+        launch {
+            while (true) {
+                delay(0.5.seconds)
+                logger.info("Number of connections {}", server.numberOfConnections())
+            }
+        }
         server.closed().await()
     }
 }
