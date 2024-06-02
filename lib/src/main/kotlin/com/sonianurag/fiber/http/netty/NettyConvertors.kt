@@ -60,3 +60,13 @@ internal fun Response.toFullNettyResponse(content: ByteBuf): HttpResponse {
     this.headers.forEach { entry -> nettyResponse.headers().add(entry.key, entry.value) }
     return nettyResponse
 }
+
+internal fun Response.toFullNettyResponse(): HttpResponse {
+    val nettyResponse =
+        DefaultFullHttpResponse(
+            this.version.toNettyVersion(),
+            HttpResponseStatus.valueOf(this.statusCode.code)
+        )
+    this.headers.forEach { entry -> nettyResponse.headers().add(entry.key, entry.value) }
+    return nettyResponse
+}
