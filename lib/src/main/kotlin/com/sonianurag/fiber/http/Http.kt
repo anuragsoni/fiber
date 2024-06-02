@@ -7,6 +7,7 @@ import com.sonianurag.fiber.http.netty.SharedServerStatistics
 import com.sonianurag.fiber.net.Address
 import com.sonianurag.fiber.net.Server
 import com.sonianurag.fiber.net.toSocketAddress
+import com.sonianurag.fiber.ssl.SslContext
 import com.sonianurag.fiber.transport.NettyTransport
 import com.sonianurag.fiber.transport.socketChannelForAddress
 import io.netty.bootstrap.ServerBootstrap
@@ -29,6 +30,7 @@ import org.slf4j.LoggerFactory
 object Http {
     fun createServer(
         whereToListen: Address,
+        sslContext: SslContext? = null,
         backlog: Int = 128,
         workerThreads: Int = max(0, Runtime.getRuntime().availableProcessors() - 1),
         tcpNoDelay: Boolean = true,
@@ -76,6 +78,11 @@ object Http {
                 override fun initChannel(ch: Channel) {
                     ch.config().setAutoRead(false)
                     val pipeline = ch.pipeline()
+
+                    if (sslContext != null) {
+                        pipeline.addLast(sslContext.nettyContext.newHandler(ch.alloc()))
+                    }
+
                     pipeline.addFirst(ChannelStatsHandler(sharedStats))
                     pipeline.addLast(PipelineStages.HTTP_REQUEST_DECODER, HttpRequestDecoder())
                     pipeline.addLast(PipelineStages.HTTP_RESPONSE_ENCODER, HttpResponseEncoder())
