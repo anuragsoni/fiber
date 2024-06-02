@@ -2,9 +2,7 @@ package com.sonianurag.fiber.http.netty
 
 import com.sonianurag.fiber.buffer.Buf
 import com.sonianurag.fiber.buffer.FiberByteBufAllocator
-import com.sonianurag.fiber.http.Body
-import com.sonianurag.fiber.http.Request
-import com.sonianurag.fiber.http.Response
+import com.sonianurag.fiber.http.*
 import com.sonianurag.fiber.utilities.coAwait
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
@@ -46,45 +44,50 @@ class HttpRequestHandler(
         }
     }
 
-    private fun createBodyStream(
-        ctx: ChannelHandlerContext,
-        bodyChannel: ReceiveChannel<Buf>
-    ): Flow<Buf> = flow {
-        ctx.read()
-        try {
-            val message = bodyChannel.receive()
-            emit(message)
-        } catch (e: Exception) {
-            when (e) {
-                is ClosedReceiveChannelException -> return@flow
-                else -> throw e
-            }
-        }
-    }
-
     private suspend fun sendResponse(ctx: ChannelHandlerContext, response: Response) {
-        when (val responseBody = response.body) {
-            is Body.Empty -> {
-                response.headers.replace("Content-Length", "0")
-                val nettyResponse = response.toNettyResponse()
+        when (val size = response.body.size) {
+            null -> response.headers.replace("Transfer-Encoding", "chunked")
+            else -> response.headers.replace("Content-Length", size.toString())
+        }
+
+        when (val body = response.body) {
+            is Empty -> {
+                val nettyResponse = response.toFullNettyResponse()
                 ctx.writeAndFlush(nettyResponse).coAwait()
             }
-            is Body.Fixed -> {
-                response.headers.replace("Content-Length", responseBody.buf.size.toString())
-                val nettyResponse =
-                    response.toFullNettyResponse(responseBody.buf.toNettyByteBuf(ctx))
+            is FixedSizeBody -> {
+                val nettyResponse = response.toFullNettyResponse(body.buf.toNettyByteBuf(ctx))
                 ctx.writeAndFlush(nettyResponse).coAwait()
             }
-            is Body.Streaming -> {
-                response.headers.replace("Transfer-Encoding", "chunked")
+            else -> {
                 val nettyResponse = response.toNettyResponse()
                 ctx.write(nettyResponse)
-                responseBody.reads.collect { buf ->
+
+                response.body.asFlow().collect { buf ->
                     if (!buf.isEmpty()) {
                         ctx.writeAndFlush(DefaultHttpContent(buf.toNettyByteBuf(ctx))).coAwait()
                     }
                 }
-                ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
+
+                ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).coAwait()
+            }
+        }
+    }
+
+    private fun createBodyStream(
+        ctx: ChannelHandlerContext,
+        bodyReader: ReceiveChannel<Buf>
+    ): Flow<Buf> = flow {
+        while (true) {
+            ctx.read()
+            try {
+                val message = bodyReader.receive()
+                emit(message)
+            } catch (e: Exception) {
+                when (e) {
+                    is ClosedReceiveChannelException -> return@flow
+                    else -> throw e
+                }
             }
         }
     }
@@ -101,12 +104,22 @@ class HttpRequestHandler(
                         PipelineStages.HTTP_BODY_HANDLER,
                         bodyHandler
                     )
-                val requestBody = createBodyStream(ctx, bodyChannel)
-                val request = msg.toRequest(Body.Streaming(requestBody))
+
+                val size =
+                    if (HttpUtil.isContentLengthSet(msg)) {
+                        HttpUtil.getContentLength(msg)
+                    } else {
+                        null
+                    }
+                val request =
+                    msg.toRequest(
+                        StreamingBody(size = size, reads = createBodyStream(ctx, bodyChannel))
+                    )
                 launch {
                     val response = handler(request)
                     sendResponse(ctx, response)
-                    bodyHandler.drain()
+                    request.body.asFlow().collect {}
+                    ctx.read()
                 }
             }
             else ->

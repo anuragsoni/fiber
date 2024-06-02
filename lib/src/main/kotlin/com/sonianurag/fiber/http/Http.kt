@@ -17,6 +17,7 @@ import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
 import io.netty.handler.codec.http.HttpRequestDecoder
 import io.netty.handler.codec.http.HttpResponseEncoder
+import io.netty.handler.codec.http.HttpServerExpectContinueHandler
 import java.net.BindException
 import java.net.SocketAddress
 import kotlin.math.max
@@ -86,6 +87,10 @@ object Http {
                     pipeline.addFirst(ChannelStatsHandler(sharedStats))
                     pipeline.addLast(PipelineStages.HTTP_REQUEST_DECODER, HttpRequestDecoder())
                     pipeline.addLast(PipelineStages.HTTP_RESPONSE_ENCODER, HttpResponseEncoder())
+                    pipeline.addLast(
+                        PipelineStages.HTTP_SERVER_EXPECT_CONTINUE,
+                        HttpServerExpectContinueHandler()
+                    )
                     pipeline.addLast(
                         PipelineStages.HTTP_REQUEST_HANDLER,
                         HttpRequestHandler(
