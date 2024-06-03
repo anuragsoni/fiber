@@ -2,6 +2,9 @@
 
 Fiber is an asynchronous HTTP toolkit for Kotlin that is built on top of coroutines and Netty.
 
+> [!CAUTION]
+> The library is in a POC stage so far. This is good for browsing/experimenting but is not ready for real-world use.
+
 ## Server Example
 
 ```kotlin
