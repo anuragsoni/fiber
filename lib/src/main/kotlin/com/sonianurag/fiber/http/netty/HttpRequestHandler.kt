@@ -118,8 +118,7 @@ class HttpRequestHandler(
                 launch {
                     val response = handler(request)
                     sendResponse(ctx, response)
-                    request.body.asFlow().collect {}
-                    ctx.read()
+                    bodyHandler.drain()
                 }
             }
             else ->
