@@ -45,6 +45,8 @@ interface Body {
         fun fromString(payload: String, charset: Charset = Charsets.UTF_8): Body {
             return FixedSizeBody(Buf.string(payload, charset))
         }
+
+        fun fromByteArray(payload: ByteArray): Body = FixedSizeBody(Buf.byteArray(payload))
     }
 }
 
