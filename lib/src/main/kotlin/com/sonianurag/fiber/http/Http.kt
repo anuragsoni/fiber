@@ -110,6 +110,7 @@ object Http {
             private val isClosed = CompletableDeferred<Unit>()
 
             override fun close() {
+                childGroup?.shutdownGracefully()
                 bossGroup.shutdownGracefully()
                 bindResult.channel().close().addListener { isClosed.complete(Unit) }
             }
