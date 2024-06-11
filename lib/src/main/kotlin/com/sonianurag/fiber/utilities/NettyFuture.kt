@@ -1,33 +1,35 @@
 package com.sonianurag.fiber.utilities
 
-import io.netty.channel.ChannelFuture
-import io.netty.channel.ChannelFutureListener
-import kotlinx.coroutines.suspendCancellableCoroutine
+import io.netty.util.concurrent.Future
+import io.netty.util.concurrent.GenericFutureListener
 import java.util.concurrent.ExecutionException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlinx.coroutines.suspendCancellableCoroutine
 
-internal suspend fun ChannelFuture.coAwait(): ChannelFuture {
+internal suspend fun <T> Future<T>.coAwait(): T {
     if (isDone) {
         try {
-            return this
+            @Suppress("BlockingMethodInNonBlockingContext") return get()
         } catch (e: ExecutionException) {
             throw e.cause ?: e
         }
     }
-    return suspendCancellableCoroutine { continuation ->
+    return suspendCancellableCoroutine { cont ->
         addListener(
-            ChannelFutureListener { future ->
-                if (future.isSuccess) {
-                    continuation.resume(this@coAwait)
-                } else {
-                    val e = cause()
-                    continuation.resumeWithException(e?.cause ?: e)
+            object : GenericFutureListener<Future<T>> {
+                override fun operationComplete(future: Future<T>) {
+                    if (future.isSuccess) {
+                        cont.resume(future.now)
+                    } else {
+                        val e = future.cause()
+                        cont.resumeWithException(e.cause ?: e)
+                    }
                 }
             }
         )
         if (isCancellable) {
-            continuation.invokeOnCancellation { cancel(false) }
+            cont.invokeOnCancellation { cancel(false) }
         }
     }
 }
