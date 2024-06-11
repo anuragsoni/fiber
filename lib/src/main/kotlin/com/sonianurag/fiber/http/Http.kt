@@ -10,6 +10,7 @@ import com.sonianurag.fiber.net.toSocketAddress
 import com.sonianurag.fiber.ssl.SslContext
 import com.sonianurag.fiber.transport.NettyTransport
 import com.sonianurag.fiber.transport.socketChannelForAddress
+import com.sonianurag.fiber.utilities.coAwait
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.buffer.PooledByteBufAllocator
 import io.netty.channel.Channel
@@ -29,7 +30,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import org.slf4j.LoggerFactory
 
 object Http {
-    fun createServer(
+    suspend fun createServer(
         whereToListen: Address,
         sslContext: SslContext? = null,
         backlog: Int = 128,
@@ -101,7 +102,7 @@ object Http {
                 }
             }
         )
-        val bindResult = bootstrap.bind(whereToListen.toSocketAddress()).awaitUninterruptibly()
+        val bindResult = bootstrap.bind(whereToListen.toSocketAddress()).also { it.coAwait() }
         if (!bindResult.isSuccess) {
             throw BindException("Failed to bind to $whereToListen: ${bindResult.cause().message}")
         }
