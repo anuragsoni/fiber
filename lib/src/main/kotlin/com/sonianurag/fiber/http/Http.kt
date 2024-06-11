@@ -10,6 +10,7 @@ import com.sonianurag.fiber.net.toSocketAddress
 import com.sonianurag.fiber.ssl.SslContext
 import com.sonianurag.fiber.transport.NettyTransport
 import com.sonianurag.fiber.transport.socketChannelForAddress
+import com.sonianurag.fiber.utilities.coAwait
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.buffer.PooledByteBufAllocator
 import io.netty.channel.Channel
@@ -18,18 +19,17 @@ import io.netty.channel.ChannelOption
 import io.netty.handler.codec.http.HttpRequestDecoder
 import io.netty.handler.codec.http.HttpResponseEncoder
 import io.netty.handler.codec.http.HttpServerExpectContinueHandler
-import java.net.BindException
-import java.net.SocketAddress
-import kotlin.math.max
-import kotlin.time.Duration
-import kotlin.time.DurationUnit
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.asCoroutineDispatcher
 import org.slf4j.LoggerFactory
+import java.net.SocketAddress
+import kotlin.math.max
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
 
 object Http {
-    fun createServer(
+    suspend fun createServer(
         whereToListen: Address,
         sslContext: SslContext? = null,
         backlog: Int = 128,
@@ -101,10 +101,7 @@ object Http {
                 }
             }
         )
-        val bindResult = bootstrap.bind(whereToListen.toSocketAddress()).awaitUninterruptibly()
-        if (!bindResult.isSuccess) {
-            throw BindException("Failed to bind to $whereToListen: ${bindResult.cause().message}")
-        }
+        val bindResult = bootstrap.bind(whereToListen.toSocketAddress()).coAwait()
         return object : Server {
 
             private val isClosed = CompletableDeferred<Unit>()
