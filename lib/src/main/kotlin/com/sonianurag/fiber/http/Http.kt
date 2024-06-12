@@ -49,6 +49,7 @@ object Http {
         val logger = LoggerFactory.getLogger("fiber/tcp")
         val bootstrap = ServerBootstrap()
         val transport = NettyTransport.default()
+        logger.trace("Using transport {}", transport::class.java.name)
         val bossGroup = transport.eventLoopGroup(1, false, "fiber/server.acceptor")
         val childGroup =
             if (workerThreads > 0) {
