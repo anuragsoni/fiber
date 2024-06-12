@@ -20,3 +20,11 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testRuntimeOnly(libs.junit.launcher)
 }
+
+tasks.compileJava {
+    options.compilerArgumentProviders.add(
+        CommandLineArgumentProvider {
+            listOf("--patch-module", "com.sonianurag.fiber=${sourceSets["main"].output.asPath}")
+        }
+    )
+}

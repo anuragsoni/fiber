@@ -1,3 +1,5 @@
+package com.sonianurag.fiber.example
+
 import com.sonianurag.fiber.http.Body
 import com.sonianurag.fiber.http.Http
 import com.sonianurag.fiber.http.Response
