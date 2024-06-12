@@ -1,6 +1,7 @@
 module com.sonianurag.fiber {
     requires transitive kotlin.stdlib;
     requires transitive kotlinx.coroutines.core;
+    requires jdk.unsupported;
 
     requires io.netty.buffer;
     requires io.netty.codec.http2;
