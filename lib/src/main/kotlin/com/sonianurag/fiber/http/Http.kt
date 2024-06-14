@@ -1,8 +1,7 @@
 package com.sonianurag.fiber.http
 
 import com.sonianurag.fiber.http.netty.ChannelStatsHandler
-import com.sonianurag.fiber.http.netty.HttpRequestHandler
-import com.sonianurag.fiber.http.netty.PipelineStages
+import com.sonianurag.fiber.http.netty.Http1ServerInitializer
 import com.sonianurag.fiber.http.netty.SharedServerStatistics
 import com.sonianurag.fiber.net.Address
 import com.sonianurag.fiber.net.Server
@@ -16,9 +15,6 @@ import io.netty.buffer.PooledByteBufAllocator
 import io.netty.channel.Channel
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
-import io.netty.handler.codec.http.HttpRequestDecoder
-import io.netty.handler.codec.http.HttpResponseEncoder
-import io.netty.handler.codec.http.HttpServerExpectContinueHandler
 import java.net.BindException
 import java.net.SocketAddress
 import kotlin.math.max
@@ -26,7 +22,6 @@ import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.asCoroutineDispatcher
 import org.slf4j.LoggerFactory
 
 object Http {
@@ -79,7 +74,6 @@ object Http {
         bootstrap.childHandler(
             object : ChannelInitializer<Channel>() {
                 override fun initChannel(ch: Channel) {
-                    ch.config().setAutoRead(false)
                     val pipeline = ch.pipeline()
 
                     if (sslContext != null) {
@@ -87,19 +81,7 @@ object Http {
                     }
 
                     pipeline.addFirst(ChannelStatsHandler(sharedStats))
-                    pipeline.addLast(PipelineStages.HTTP_REQUEST_DECODER, HttpRequestDecoder())
-                    pipeline.addLast(PipelineStages.HTTP_RESPONSE_ENCODER, HttpResponseEncoder())
-                    pipeline.addLast(
-                        PipelineStages.HTTP_SERVER_EXPECT_CONTINUE,
-                        HttpServerExpectContinueHandler()
-                    )
-                    pipeline.addLast(
-                        PipelineStages.HTTP_REQUEST_HANDLER,
-                        HttpRequestHandler(
-                            coroutineContext = ch.eventLoop().asCoroutineDispatcher(),
-                            handler = service
-                        )
-                    )
+                    pipeline.addLast(Http1ServerInitializer(service))
                 }
             }
         )
