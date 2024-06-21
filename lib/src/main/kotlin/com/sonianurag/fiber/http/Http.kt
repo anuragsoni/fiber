@@ -29,7 +29,7 @@ object Http {
         whereToListen: Address,
         sslContext: SslContext? = null,
         backlog: Int = 128,
-        workerThreads: Int = max(0, Runtime.getRuntime().availableProcessors() - 1),
+        workerThreads: Int = max(1, Runtime.getRuntime().availableProcessors()),
         tcpNoDelay: Boolean = true,
         connectTimeout: Duration? = null,
         keepAlive: Boolean = true,
@@ -45,17 +45,8 @@ object Http {
         val bootstrap = ServerBootstrap()
         val transport = NettyTransport.default()
         logger.trace("Using transport {}", transport::class.java.name)
-        val bossGroup = transport.eventLoopGroup(1, false, "fiber/server.acceptor")
-        val childGroup =
-            if (workerThreads > 0) {
-                transport.eventLoopGroup(workerThreads, true, "fiber/server.worker")
-            } else {
-                null
-            }
-        when (childGroup) {
-            null -> bootstrap.group(bossGroup)
-            else -> bootstrap.group(bossGroup, childGroup)
-        }
+        val bossGroup = transport.eventLoopGroup(workerThreads, false, "fiber/server")
+        bootstrap.group(bossGroup)
         bootstrap.option(ChannelOption.SO_BACKLOG, backlog)
         bootstrap.childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
         bootstrap.childOption(ChannelOption.TCP_NODELAY, tcpNoDelay)
@@ -94,7 +85,6 @@ object Http {
             private val isClosed = CompletableDeferred<Unit>()
 
             override fun close() {
-                childGroup?.shutdownGracefully()
                 bossGroup.shutdownGracefully()
                 bindResult.channel().close().addListener { isClosed.complete(Unit) }
             }
