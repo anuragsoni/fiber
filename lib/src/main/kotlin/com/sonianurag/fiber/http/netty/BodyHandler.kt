@@ -12,18 +12,23 @@ import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 class BodyHandler(
     override val coroutineContext: CoroutineContext,
     private val allocator: ByteBufAllocator,
     writer: SendChannel<Buf>
 ) : CoroutineScope, ChannelInboundHandlerAdapter() {
-    private val logger: Logger = LoggerFactory.getLogger(BodyHandler::class.java)
 
     init {
         require(!allocator.isDirectBufferPooled) { "Unpooled byte buf allocator expected" }
+    }
+
+    override fun handlerAdded(ctx: ChannelHandlerContext?) {
+        ctx?.channel()?.config()?.setAutoRead(false)
+    }
+
+    override fun handlerRemoved(ctx: ChannelHandlerContext?) {
+        ctx?.channel()?.config()?.setAutoRead(true)
     }
 
     sealed class State {
@@ -65,10 +70,6 @@ class BodyHandler(
     }
 
     private var state: State = State.Active(writer)
-
-    override fun handlerRemoved(ctx: ChannelHandlerContext) {
-        ctx.read()
-    }
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
         when (msg) {

@@ -25,11 +25,6 @@ class HttpRequestHandler(
 ) : ChannelInboundHandlerAdapter(), CoroutineScope {
     private val logger: Logger = LoggerFactory.getLogger(HttpRequestHandler::class.java)
 
-    override fun channelActive(ctx: ChannelHandlerContext) {
-        logger.trace("{}/active", ctx.name())
-        ctx.read()
-    }
-
     @Deprecated("Deprecated in Java")
     override fun exceptionCaught(ctx: ChannelHandlerContext?, cause: Throwable?) {
         when (cause) {

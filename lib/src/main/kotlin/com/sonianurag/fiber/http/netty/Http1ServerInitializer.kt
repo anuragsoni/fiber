@@ -12,7 +12,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 class Http1ServerInitializer(private val service: suspend (Request) -> Response) :
     ChannelInitializer<Channel>() {
     override fun initChannel(ch: Channel) {
-        ch.config().setAutoRead(false)
+        ch.config().setAutoRead(true)
         val pipeline = ch.pipeline()
         pipeline.addLast(PipelineStages.HTTP_REQUEST_DECODER, HttpRequestDecoder())
         pipeline.addLast(PipelineStages.HTTP_RESPONSE_ENCODER, HttpResponseEncoder())
