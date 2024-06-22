@@ -14,6 +14,7 @@ dependencies {
     implementation(libs.netty.transport.native.kqueue) { artifact { classifier = "osx-aarch_64" } }
     implementation(libs.netty.transport.native.kqueue) { artifact { classifier = "osx-x86_64" } }
     implementation(libs.slf4j.api)
+    testImplementation(libs.okhttp)
     testImplementation(libs.jqwik.kotlin)
     testImplementation(libs.junit.jupiter.engine)
     testImplementation(libs.kotlin.junit5)
