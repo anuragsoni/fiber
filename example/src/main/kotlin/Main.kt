@@ -3,11 +3,11 @@ import com.sonianurag.fiber.http.Http
 import com.sonianurag.fiber.http.Response
 import com.sonianurag.fiber.http.Service
 import com.sonianurag.fiber.net.Address
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
-import kotlin.time.Duration.Companion.seconds
 
 val payload =
     Body.fromString(

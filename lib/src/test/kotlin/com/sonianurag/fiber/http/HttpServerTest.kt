@@ -1,12 +1,14 @@
 package com.sonianurag.fiber.http
 
 import com.sonianurag.fiber.net.Address
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpRequest.BodyPublishers
+import java.net.http.HttpResponse.BodyHandlers
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.coroutines.test.runTest
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 
 class HttpServerTest {
     @Test
@@ -15,12 +17,14 @@ class HttpServerTest {
             val service = Service("Hello") { Response.create(Body.fromString("Hello World")) }
             Http.createServer(Address.HostAndPort(host = "localhost", port = 0), service = service)
                 .use { server ->
-                    val client = OkHttpClient()
-                    val response =
-                        client
-                            .newCall(Request.Builder().url("http:/${server.listeningOn}").build())
-                            .execute()
-                    assertEquals(expected = "Hello World", actual = response.body?.string())
+                    HttpClient.newHttpClient().use { client ->
+                        val request =
+                            HttpRequest.newBuilder()
+                                .uri(URI.create("http:/${server.listeningOn}"))
+                                .build()
+                        val response = client.send(request, BodyHandlers.ofString())
+                        assertEquals(expected = "Hello World", actual = response.body())
+                    }
                 }
         }
     }
@@ -31,17 +35,15 @@ class HttpServerTest {
             val service = Service("hello") { Response.create(it.body) }
             Http.createServer(Address.HostAndPort(host = "localhost", port = 0), service = service)
                 .use { server ->
-                    val client = OkHttpClient()
-                    val response =
-                        client
-                            .newCall(
-                                Request.Builder()
-                                    .url("http:/${server.listeningOn}")
-                                    .post("Hello World".toRequestBody())
-                                    .build()
-                            )
-                            .execute()
-                    assertEquals(expected = "Hello World", actual = response.body?.string())
+                    HttpClient.newHttpClient().use { client ->
+                        val request =
+                            HttpRequest.newBuilder()
+                                .uri(URI.create("http:/${server.listeningOn}"))
+                                .method("POST", BodyPublishers.ofString("Hello World"))
+                                .build()
+                        val response = client.send(request, BodyHandlers.ofString())
+                        assertEquals(expected = "Hello World", actual = response.body())
+                    }
                 }
         }
     }
