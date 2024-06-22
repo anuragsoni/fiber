@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory
 
 class HttpRequestHandler(
     override val coroutineContext: CoroutineContext,
-    private val handler: suspend (Request) -> Response
+    private val service: Service
 ) : ChannelInboundHandlerAdapter(), CoroutineScope {
     private val logger: Logger = LoggerFactory.getLogger(HttpRequestHandler::class.java)
 
@@ -111,7 +111,7 @@ class HttpRequestHandler(
                         StreamingBody(size = size, reads = createBodyStream(ctx, bodyChannel))
                     )
                 launch {
-                    val response = handler(request)
+                    val response = service.run(request)
                     sendResponse(ctx, response)
                     bodyHandler.drain()
                 }

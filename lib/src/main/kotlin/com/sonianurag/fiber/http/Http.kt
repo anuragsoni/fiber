@@ -35,7 +35,7 @@ object Http {
         keepAlive: Boolean = true,
         receiveBufferSize: Int = 65536,
         sendBufferSize: Int = 65536,
-        service: suspend (Request) -> Response
+        service: Service
     ): Server {
         require(backlog > 0) { "backlog must be > 0" }
         require(receiveBufferSize > 0) { "receiveBufferSize must be > 0" }

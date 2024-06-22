@@ -12,9 +12,8 @@ class HttpServerTest {
     @Test
     fun `can respond to get requests`() {
         runTest {
-            Http.createServer(Address.HostAndPort(host = "localhost", port = 0)) {
-                    Response.create(Body.fromString("Hello World"))
-                }
+            val service = Service("Hello") { Response.create(Body.fromString("Hello World")) }
+            Http.createServer(Address.HostAndPort(host = "localhost", port = 0), service = service)
                 .use { server ->
                     val client = OkHttpClient()
                     val response =
@@ -29,9 +28,8 @@ class HttpServerTest {
     @Test
     fun `can respond to request with bodies`() {
         runTest {
-            Http.createServer(Address.HostAndPort(host = "localhost", port = 0)) {
-                    Response.create(it.body)
-                }
+            val service = Service("hello") { Response.create(it.body) }
+            Http.createServer(Address.HostAndPort(host = "localhost", port = 0), service = service)
                 .use { server ->
                     val client = OkHttpClient()
                     val response =
