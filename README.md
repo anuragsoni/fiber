@@ -18,10 +18,14 @@ import org.slf4j.LoggerFactory
 fun main() {
     val logger = LoggerFactory.getLogger("example")
     runBlocking {
+        val service = Service("hello") {
+            Response.create(Body.fromString("Hello World"))
+        }
         val server =
-            Http.createServer(Address.HostAndPort(host = "localhost", port = 8080)) {
-                Response.create(Body.fromString("Hello World"))
-            }
+            Http.createServer(
+                Address.HostAndPort(host = "localhost", port = 8080),
+                service = service
+            )
         logger.info("Listening on: {}", server.listeningOn)
         server.closed().await()
     }
