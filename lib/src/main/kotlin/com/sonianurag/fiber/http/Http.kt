@@ -45,7 +45,7 @@ object Http {
         val bootstrap = ServerBootstrap()
         val transport = NettyTransport.default()
         logger.trace("Using transport {}", transport::class.java.name)
-        val bossGroup = transport.eventLoopGroup(workerThreads, false, "fiber/server")
+        val bossGroup = transport.eventLoopGroup(workerThreads, true, "fiber/server")
         bootstrap.group(bossGroup)
         bootstrap.option(ChannelOption.SO_BACKLOG, backlog)
         bootstrap.childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
