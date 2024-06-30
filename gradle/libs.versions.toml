@@ -2,12 +2,12 @@
 # https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
 [versions]
 dokka = "1.9.20"
-jqwik-kotlin = "1.8.5"
-junit-jupiter-engine = "5.10.2"
-junit-launcher = "1.10.2"
+jqwik-kotlin = "1.9.0"
+junit-jupiter-engine = "5.10.3"
+junit-launcher = "1.10.3"
 kotlin = "2.0.0"
 kotlinx-coroutines = "1.8.1"
-kover = "0.8.1"
+kover = "0.8.2"
 logback = "1.5.6"
 netty = "4.1.111.Final"
 slf4j-api = "2.0.13"
