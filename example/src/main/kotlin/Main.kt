@@ -13,15 +13,7 @@ val payload =
 fun main() {
   runBlocking {
     val logger = LoggerFactory.getLogger("fiber/example")
-    val server =
-      Http.createServer(InetSocketAddress("localhost", 8080)) { request ->
-        object : Response {
-          override val statusCode: StatusCode = StatusCode.OK
-          override val headers: Headers = emptyHeaders()
-          override val version: Version = request.version
-          override val body: Body = payload
-        }
-      }
+    val server = Http.createServer(InetSocketAddress("localhost", 8080)) { respond(payload) }
 
     launch {
       while (true) {

@@ -17,7 +17,7 @@ object Http {
   suspend fun createServer(
     whereToListen: SocketAddress,
     config: HttpServerOptions = HttpServerOptions(),
-    service: suspend (Request) -> Response,
+    service: suspend ServerContext.(Request) -> Response,
   ): Server {
     val server = CompletableDeferred<Server>()
     val counter = LongAdder()

@@ -16,12 +16,13 @@ import kotlinx.coroutines.launch
 
 class HttpRequestHandler(
   private val vertx: Vertx,
-  private val service: suspend (Request) -> Response,
+  private val service: suspend ServerContext.(Request) -> Response,
 ) : Handler<HttpServerRequest>, CoroutineScope {
   override val coroutineContext: CoroutineContext = vertx.dispatcher()
 
   private suspend fun dispatchRequest(request: Request, vertxRequest: HttpServerRequest) {
-    val response = service(request)
+    val context = VertxServerContext(vertxRequest, vertx, request)
+    val response = with(context) { service(request) }
     val vertxResponse = vertxRequest.response()
     vertxResponse.setStatusCode(response.statusCode.code)
     response.headers.forEach { entry -> vertxResponse.putHeader(entry.key, entry.value) }
