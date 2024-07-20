@@ -4,9 +4,12 @@ import kotlin.test.*
 
 class DefaultHeadersTest {
   @Test
-  fun `can create headers from list`() {
-    val headers = listOf("foo" to "bar", "hello" to "world").toHeaders()
-    assertFalse { headers.isEmpty() }
+  fun `can create headers incrementally`() {
+    val headers = buildHeaders {
+      add("foo", "bar")
+      add("hello", "world")
+    }
+    assertFalse { headers.isEmpty }
     assertContentEquals(
       expected = listOf("foo" to "bar", "hello" to "world"),
       actual = headers.map { it.key to it.value },
@@ -15,44 +18,31 @@ class DefaultHeadersTest {
 
   @Test
   fun `header operations`() {
-    val headers = Headers.create()
 
-    assertTrue { headers.isEmpty() }
+    assertTrue { emptyHeaders().isEmpty }
 
-    headers.addUnlessExists("foo", "bar")
-    headers.add("foo", "baz")
-    headers.addUnlessExists("foo", "this won't be added")
-
-    assertContentEquals(
-      expected = listOf("foo" to "bar", "foo" to "baz"),
-      actual = headers.map { it.key to it.value },
-    )
-
-    headers.add("hello", "world")
-    headers.remove("foo")
+    val headers = buildHeaders {
+      addUnlessExists("foo", "bar")
+      add("foo", "baz")
+      addUnlessExists("foo", "this won't be added")
+      add("hello", "world")
+    }
 
     assertContentEquals(
-      expected = listOf("hello" to "world"),
-      actual = headers.map { it.key to it.value },
-    )
-
-    headers.remove("doesNotExist")
-    assertContentEquals(
-      expected = listOf("hello" to "world"),
+      expected = listOf("foo" to "bar", "foo" to "baz", "hello" to "world"),
       actual = headers.map { it.key to it.value },
     )
 
     assertEquals(expected = "world", actual = headers.get("HELLO"))
-    headers.add("foo", "bar")
-    headers.add("FOO", "baz")
-    assertContentEquals(expected = listOf("bar", "baz"), actual = headers.getAll("FoO"))
 
-    headers.replace("foo", "THIS IS A NEW KEY")
+    val headers2 = buildHeaders {
+      add("foo", "bar")
+      add("FOO", "baz")
+    }
 
-    assertContentEquals(expected = listOf("THIS IS A NEW KEY"), actual = headers.getAll("FoO"))
-
-    assertFalse { headers.containsKey("MISSING") }
-    assertContentEquals(expected = listOf(), headers.getAll("MISSING"))
+    assertContentEquals(expected = listOf("bar", "baz"), actual = headers2.getAll("FoO"))
+    assertFalse { headers2.containsKey("MISSING") }
+    assertContentEquals(expected = listOf(), headers2.getAll("MISSING"))
 
     assertContentEquals(expected = listOf("foo", "hello"), actual = headers.names().toList())
   }

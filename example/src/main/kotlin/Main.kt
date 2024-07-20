@@ -17,7 +17,7 @@ fun main() {
       Http.createServer(InetSocketAddress("localhost", 8080)) { request ->
         object : Response {
           override val statusCode: StatusCode = StatusCode.OK
-          override val headers: Headers = Headers.create()
+          override val headers: Headers = emptyHeaders()
           override val version: Version = request.version
           override val body: Body = payload
         }

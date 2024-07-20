@@ -33,10 +33,7 @@ internal fun HttpServerRequest.toRequest(body: Body = Body.empty): Request {
     override val version: Version = this@toRequest.version().toVersion()
     override val body: Body = body
     override val uri: String = this@toRequest.uri()
-    override val headers: Headers =
-      Headers.create().also {
-        this@toRequest.headers().forEach { key, value -> it.add(key, value) }
-      }
+    override val headers: Headers = VertxHeader(this@toRequest.headers())
   }
 }
 
