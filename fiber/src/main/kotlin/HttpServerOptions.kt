@@ -21,6 +21,7 @@ data class HttpServerOptions(
   val receiveBufferSize: Int = 65536,
   val sendBufferSize: Int = 65536,
   val connectTimeout: Duration? = null,
+  val sslContext: SslContext? = null,
 ) {
   init {
     require(backlog > 0) { "backlog must be > 0" }

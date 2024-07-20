@@ -3,6 +3,8 @@ package com.sonianurag.fiber
 import com.sonianurag.fiber.vertx.*
 import com.sonianurag.fiber.vertx.toVertxAddress
 import io.vertx.core.Vertx
+import io.vertx.core.http.HttpVersion
+import io.vertx.core.net.KeyCertOptions
 import io.vertx.kotlin.core.deploymentOptionsOf
 import io.vertx.kotlin.core.http.httpServerOptionsOf
 import io.vertx.kotlin.core.vertxOptionsOf
@@ -35,13 +37,25 @@ object Http {
           val http =
             vertx.createHttpServer(
               httpServerOptionsOf(
-                tcpNoDelay = config.tcpNoDelay,
-                tcpKeepAlive = config.keepAlive,
-                acceptBacklog = config.backlog,
-                receiveBufferSize = config.receiveBufferSize,
-                sendBufferSize = config.sendBufferSize,
-                idleTimeout = config.connectTimeout?.inWholeSeconds?.toInt(),
-              )
+                  tcpNoDelay = config.tcpNoDelay,
+                  tcpKeepAlive = config.keepAlive,
+                  acceptBacklog = config.backlog,
+                  receiveBufferSize = config.receiveBufferSize,
+                  sendBufferSize = config.sendBufferSize,
+                  idleTimeout = config.connectTimeout?.inWholeSeconds?.toInt(),
+                )
+                .also { options ->
+                  if (config.sslContext != null) {
+                    options.setSsl(true)
+                    options.setKeyCertOptions(
+                      KeyCertOptions.wrap(config.sslContext.keyManagerFactory)
+                    )
+                    if (config.sslContext.enableAlpn) {
+                      options.setUseAlpn(true)
+                      options.setAlpnVersions(listOf(HttpVersion.HTTP_2, HttpVersion.HTTP_1_1))
+                    }
+                  }
+                }
             )
 
           http.connectionHandler {
