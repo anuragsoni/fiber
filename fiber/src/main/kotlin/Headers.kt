@@ -141,7 +141,7 @@ interface Headers : Iterable<Map.Entry<String, String>> {
   fun names(): Set<String>
 }
 
-internal class VertxHeader(val vertxHeaders: MultiMap) : Headers {
+internal class VertxHeader(private val vertxHeaders: MultiMap) : Headers {
   override val isEmpty: Boolean = vertxHeaders.isEmpty
   override val size: Int = vertxHeaders.size()
 
