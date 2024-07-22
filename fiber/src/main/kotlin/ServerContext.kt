@@ -12,7 +12,7 @@ interface ServerContext {
   val Request.isSSL: Boolean
 
   fun respond(
-    body: Body,
+    body: Body = Body.empty,
     statusCode: StatusCode = StatusCode.OK,
     headers: Headers = emptyHeaders(),
   ): Response
