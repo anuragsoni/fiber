@@ -14,7 +14,7 @@ fun main() {
   runBlocking {
     val logger = LoggerFactory.getLogger("fiber/example")
     val server = Http.createServer(InetSocketAddress("localhost", 8080)) { respond(payload) }
-
+    logger.info("Listening on {}", server.listeningOn)
     launch {
       while (true) {
         delay(0.5.seconds)

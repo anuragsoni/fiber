@@ -23,9 +23,7 @@ class HttpServerTest {
         .use { server ->
           HttpClient.newHttpClient().use { client ->
             val request =
-              HttpRequest.newBuilder()
-                .uri(URI.create("http://localhost:${server.actualPort}"))
-                .build()
+              HttpRequest.newBuilder().uri(URI.create("http:/${server.listeningOn}")).build()
             val response = client.send(request, BodyHandlers.ofString())
             assertEquals(expected = "Hello World", actual = response.body())
           }
@@ -46,7 +44,7 @@ class HttpServerTest {
           HttpClient.newHttpClient().use { client ->
             val request =
               HttpRequest.newBuilder()
-                .uri(URI.create("http://localhost:${server.actualPort}"))
+                .uri(URI.create("http:/${server.listeningOn}"))
                 .method("POST", BodyPublishers.ofString("Hello World"))
                 .build()
             val response = client.send(request, BodyHandlers.ofString())

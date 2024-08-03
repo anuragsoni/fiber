@@ -1,7 +1,7 @@
 package com.sonianurag.fiber
 
-import io.vertx.core.MultiMap
-import io.vertx.core.http.impl.headers.HeadersMultiMap
+import io.netty.handler.codec.http.DefaultHttpHeadersFactory
+import io.netty.handler.codec.http.HttpHeaders
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -68,7 +68,7 @@ fun emptyHeaders(): Headers = EmptyHeaders
 inline fun buildHeaders(handler: HeaderBuilder.() -> Unit): Headers {
   contract { callsInPlace(handler, InvocationKind.EXACTLY_ONCE) }
 
-  val headers = HeadersMultiMap.httpHeaders()
+  val headers = DefaultHttpHeadersFactory.headersFactory().newHeaders()
 
   val builder =
     object : HeaderBuilder {
@@ -141,27 +141,27 @@ interface Headers : Iterable<Map.Entry<String, String>> {
   fun names(): Set<String>
 }
 
-internal class VertxHeader(private val vertxHeaders: MultiMap) : Headers {
-  override val isEmpty: Boolean = vertxHeaders.isEmpty
-  override val size: Int = vertxHeaders.size()
+internal class NettyHttp1Headers(private val nettyHeaders: HttpHeaders) : Headers {
+  override val isEmpty: Boolean = nettyHeaders.isEmpty
+  override val size: Int = nettyHeaders.size()
 
   override fun containsKey(key: String): Boolean {
-    return vertxHeaders.contains(key)
+    return nettyHeaders.contains(key)
   }
 
   override fun get(key: String): String? {
-    return vertxHeaders.get(key)
+    return nettyHeaders.get(key)
   }
 
   override fun getAll(key: String): List<String> {
-    return vertxHeaders.getAll(key) ?: emptyList()
+    return nettyHeaders.getAll(key) ?: emptyList()
   }
 
   override fun names(): Set<String> {
-    return vertxHeaders.names() ?: emptySet()
+    return nettyHeaders.names() ?: emptySet()
   }
 
   override fun iterator(): Iterator<Map.Entry<String, String>> {
-    return vertxHeaders.iterator()
+    return nettyHeaders.iteratorAsString()
   }
 }
