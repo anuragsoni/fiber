@@ -1,15 +1,10 @@
 package com.sonianurag.fiber
 
-import io.vertx.core.Vertx
-import io.vertx.core.http.HttpServerRequest
-import java.net.InetSocketAddress
+import io.netty.channel.Channel
 import java.net.SocketAddress
-import java.net.UnixDomainSocketAddress
 
 interface ServerContext {
   fun Request.remoteAddress(): SocketAddress?
-
-  val Request.isSSL: Boolean
 
   fun respond(
     body: Body = Body.empty,
@@ -19,12 +14,8 @@ interface ServerContext {
 }
 
 internal interface ServerContextInternal : ServerContext {
-  val vertx: Vertx
-  val vertxRequest: HttpServerRequest
+  val nettyChannel: Channel
   val request: Request
-
-  override val Request.isSSL: Boolean
-    get() = vertxRequest.isSSL
 
   override fun respond(body: Body, statusCode: StatusCode, headers: Headers): Response {
     return object : Response {
@@ -36,19 +27,11 @@ internal interface ServerContextInternal : ServerContext {
   }
 }
 
-internal class VertxServerContext(
-  override val vertxRequest: HttpServerRequest,
-  override val vertx: Vertx,
+internal class NettyHttp1ServerContext(
   override val request: Request,
+  override val nettyChannel: Channel,
 ) : ServerContextInternal {
-  private val remoteAddress: SocketAddress? =
-    if (vertxRequest.remoteAddress().isInetSocket) {
-      InetSocketAddress(vertxRequest.remoteAddress().host(), vertxRequest.remoteAddress().port())
-    } else if (vertxRequest.remoteAddress().isDomainSocket) {
-      UnixDomainSocketAddress.of(vertxRequest.remoteAddress().path())
-    } else {
-      null
-    }
+  private val remoteAddress: SocketAddress? = nettyChannel.remoteAddress()
 
   override fun Request.remoteAddress(): SocketAddress? {
     return remoteAddress

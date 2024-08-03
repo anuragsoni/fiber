@@ -1,19 +1,24 @@
 package com.sonianurag.fiber
 
-import com.sonianurag.fiber.vertx.*
-import com.sonianurag.fiber.vertx.toVertxAddress
-import io.vertx.core.Vertx
-import io.vertx.core.http.HttpVersion
-import io.vertx.core.net.KeyCertOptions
-import io.vertx.kotlin.core.deploymentOptionsOf
-import io.vertx.kotlin.core.http.httpServerOptionsOf
-import io.vertx.kotlin.core.vertxOptionsOf
-import io.vertx.kotlin.coroutines.CoroutineVerticle
-import io.vertx.kotlin.coroutines.coAwait
+import com.sonianurag.fiber.netty.ChannelStatsHandler
+import com.sonianurag.fiber.netty.SharedServerStatistics
+import com.sonianurag.fiber.netty.handlers.http1.Http1ServerInitializer
+import com.sonianurag.fiber.netty.transport.NioTransport
+import com.sonianurag.fiber.netty.transport.Transport
+import com.sonianurag.fiber.netty.utilities.coAwait
+import io.netty.bootstrap.ServerBootstrap
+import io.netty.buffer.PooledByteBufAllocator
+import io.netty.channel.Channel
+import io.netty.channel.ChannelInitializer
+import io.netty.channel.ChannelOption
+import io.netty.util.concurrent.DefaultThreadFactory
+import java.net.BindException
 import java.net.SocketAddress
-import java.util.concurrent.atomic.LongAdder
+import java.net.UnixDomainSocketAddress
+import kotlin.time.DurationUnit
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import org.slf4j.LoggerFactory
 
 object Http {
   suspend fun createServer(
@@ -21,89 +26,73 @@ object Http {
     config: HttpServerOptions = HttpServerOptions(),
     service: suspend ServerContext.(Request) -> Response,
   ): Server {
-    val server = CompletableDeferred<Server>()
-    val counter = LongAdder()
-    val vertx =
-      Vertx.vertx(
-        vertxOptionsOf(
-          preferNativeTransport = config.preferNativeTransport,
-          useDaemonThread = true,
-          eventLoopPoolSize = Runtime.getRuntime().availableProcessors(),
-        )
-      )
-    val httpServer = {
-      object : CoroutineVerticle() {
-        override suspend fun start() {
-          val http =
-            vertx.createHttpServer(
-              httpServerOptionsOf(
-                  tcpNoDelay = config.tcpNoDelay,
-                  tcpKeepAlive = config.keepAlive,
-                  acceptBacklog = config.backlog,
-                  receiveBufferSize = config.receiveBufferSize,
-                  sendBufferSize = config.sendBufferSize,
-                  idleTimeout = config.connectTimeout?.inWholeSeconds?.toInt(),
-                )
-                .also { options ->
-                  if (config.sslContext != null) {
-                    options.setSsl(true)
-                    options.setKeyCertOptions(
-                      KeyCertOptions.wrap(config.sslContext.keyManagerFactory)
-                    )
-                    if (config.sslContext.enableAlpn) {
-                      options.setUseAlpn(true)
-                      options.setAlpnVersions(listOf(HttpVersion.HTTP_2, HttpVersion.HTTP_1_1))
-                    }
-                  }
-                }
-            )
+    val logger = LoggerFactory.getLogger("fiber/http")
+    val bootstrap = ServerBootstrap()
+    val transport =
+      if (config.preferNativeTransport) {
+        Transport.default()
+      } else {
+        NioTransport
+      }
 
-          http.connectionHandler {
-            counter.increment()
-            it.closeHandler { counter.decrement() }
-          }
+    logger.trace("Using transport {}", transport::class.java)
 
-          http.requestHandler(HttpRequestHandler(vertx, service))
+    val bossGroup =
+      transport.eventLoopGroup(config.workerThreads, DefaultThreadFactory("fiber/server", true))
 
-          try {
-            http.listen(whereToListen.toVertxAddress()).coAwait().let {
-              server.complete(
-                object : Server {
-                  val closedDeferred = CompletableDeferred<Unit>()
-
-                  override fun closed(): Deferred<Unit> {
-                    return closedDeferred
-                  }
-
-                  override val actualPort: Int = it.actualPort()
-
-                  override fun numberOfConnections(): Long {
-                    return counter.sum()
-                  }
-
-                  override fun close() {
-                    it.close().onComplete { result ->
-                      if (result.succeeded()) {
-                        closedDeferred.complete(Unit)
-                      } else {
-                        closedDeferred.completeExceptionally(result.cause())
-                      }
-                    }
-                  }
-                }
-              )
-            }
-          } catch (e: Exception) {
-            server.completeExceptionally(e)
-            throw e
-          }
+    bootstrap
+      .group(bossGroup)
+      .option(ChannelOption.SO_BACKLOG, config.backlog)
+      .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+      .childOption(ChannelOption.TCP_NODELAY, config.tcpNoDelay)
+      .childOption(ChannelOption.SO_KEEPALIVE, config.keepAlive)
+      .childOption(ChannelOption.SO_RCVBUF, config.receiveBufferSize)
+      .childOption(ChannelOption.SO_SNDBUF, config.sendBufferSize)
+      .also { builder ->
+        config.connectTimeout?.let {
+          builder.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, it.toInt(DurationUnit.MILLISECONDS))
         }
       }
-    }
 
-    vertx
-      .deployVerticle(httpServer, deploymentOptionsOf(instances = config.workerThreads))
-      .coAwait()
-    return server.await()
+    val sharedStats = SharedServerStatistics()
+    bootstrap.channelFactory(
+      transport.serverChannelFactory(whereToListen is UnixDomainSocketAddress)
+    )
+
+    bootstrap.childHandler(
+      object : ChannelInitializer<Channel>() {
+        override fun initChannel(ch: Channel) {
+          val pipeline = ch.pipeline()
+          if (config.sslContext != null) {
+            pipeline.addLast(config.sslContext.nettyContext.newHandler(ch.alloc()))
+          }
+          pipeline.addFirst(ChannelStatsHandler(sharedStats))
+          pipeline.addLast(Http1ServerInitializer(service))
+        }
+      }
+    )
+    val bindResult = bootstrap.bind(whereToListen).also { it.coAwait() }
+    if (!bindResult.isSuccess) {
+      throw BindException("Failed to bind to $whereToListen: ${bindResult.cause().message}")
+    }
+    return object : Server {
+
+      private val isClosed = CompletableDeferred<Unit>()
+
+      override fun close() {
+        bossGroup.shutdownGracefully()
+        bindResult.channel().close().addListener { isClosed.complete(Unit) }
+      }
+
+      override val listeningOn: SocketAddress = bindResult.channel().localAddress()
+
+      override fun closed(): Deferred<Unit> {
+        return isClosed
+      }
+
+      override fun numberOfConnections(): Long {
+        return sharedStats.totalConnections()
+      }
+    }
   }
 }

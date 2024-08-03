@@ -18,12 +18,13 @@ fun getClassifierForArchitecture(arch: ArchitectureInternal): String? {
 
 dependencies {
   implementation(libs.kotlinx.coroutines)
+  implementation(libs.netty.buffer)
+  implementation(libs.netty.codec.http)
+  implementation(libs.netty.codec.http2)
+  implementation(libs.netty.handler)
   implementation(libs.netty.transport.native.epoll)
   implementation(libs.netty.transport.native.kqueue)
   implementation(libs.slf4j.api)
-  implementation(libs.vertx.core)
-  implementation(libs.vertx.kotlin)
-  implementation(libs.vertx.kotlin.coroutines)
 
   val currentOS = DefaultNativePlatform.getCurrentOperatingSystem()
   val currentArchitecture = DefaultNativePlatform.getCurrentArchitecture()
