@@ -11,6 +11,7 @@ import io.netty.buffer.PooledByteBufAllocator
 import io.netty.channel.Channel
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
+import io.netty.channel.unix.DomainSocketAddress
 import io.netty.util.concurrent.DefaultThreadFactory
 import java.net.BindException
 import java.net.SocketAddress
@@ -71,7 +72,18 @@ object Http {
         }
       }
     )
-    val bindResult = bootstrap.bind(whereToListen).also { it.coAwait() }
+    val addr =
+      when (whereToListen) {
+        is UnixDomainSocketAddress -> {
+          if (transport is NioTransport) {
+            whereToListen
+          } else {
+            DomainSocketAddress(whereToListen.path.toFile())
+          }
+        }
+        else -> whereToListen
+      }
+    val bindResult = bootstrap.bind(addr).also { it.coAwait() }
     if (!bindResult.isSuccess) {
       throw BindException("Failed to bind to $whereToListen: ${bindResult.cause().message}")
     }
