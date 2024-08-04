@@ -22,7 +22,7 @@ interface BufBuilder {
 }
 
 /** [Buf] is an immutable byte buffer with efficient index based access. */
-interface Buf {
+sealed interface Buf {
   val size: Int
 
   /** [isEmpty] returns true if the buffer is empty. */
@@ -179,4 +179,22 @@ fun ByteArray.toBuf(): Buf {
   val buffer =
     FiberByteBufAllocator.DEFAULT.buffer(this.size, this.size).also { it.writeBytes(this) }
   return NettyBuf(buffer)
+}
+
+/** Creates a new immutable buffer with the content of [other] appended at the end of [Buf]. */
+fun Buf.append(other: Buf): Buf {
+  return when (this) {
+    is Empty -> other
+    is NettyBuf -> {
+      when (other) {
+        is Empty -> this
+        is NettyBuf -> {
+          FiberByteBufAllocator.unpooledAllocator.compositeBuffer().let {
+            it.addComponents(true, this.asByteBuf(), other.asByteBuf())
+            NettyBuf(it)
+          }
+        }
+      }
+    }
+  }
 }

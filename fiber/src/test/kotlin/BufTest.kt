@@ -54,4 +54,17 @@ class BufTest {
     val buf = buildBuf { append(input) }
     assertEquals(expected = input, actual = buf.decodeToString())
   }
+
+  @Test
+  fun `can concatenate buffers`() {
+    val samplePayload = "Hello World"
+    val buf = buildBuf { append(samplePayload) }
+    val combinedBuffer = Buf.empty.append(buf).append(buf).append(buf).append(buf).append(Buf.empty)
+    assertEquals(
+      expected =
+        listOf(samplePayload, samplePayload, samplePayload, samplePayload)
+          .joinToString(separator = ""),
+      actual = combinedBuffer.decodeToString(),
+    )
+  }
 }
