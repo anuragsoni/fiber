@@ -26,7 +26,7 @@ class HttpServerTest {
   @Test
   fun `can respond to get requests`() {
     runTest {
-      Http.createServer(InetSocketAddress("localhost", 0)) {
+      createHttpServer(InetSocketAddress("localhost", 0)) {
           when (it.method) {
             Method.GET -> respond("Hello World".toBody())
             else -> respond(statusCode = StatusCode.METHOD_NOT_ALLOWED)
@@ -47,7 +47,7 @@ class HttpServerTest {
   fun `can listen on unix domain sockets`() {
     runTest {
       val temp = kotlin.io.path.createTempFile().also { it.deleteIfExists() }
-      Http.createServer(UnixDomainSocketAddress.of(temp)) { respond("Hello World".toBody()) }
+      createHttpServer(UnixDomainSocketAddress.of(temp)) { respond("Hello World".toBody()) }
         .use {
           val content =
             NioEventLoopGroup().use { group ->
@@ -94,9 +94,9 @@ class HttpServerTest {
   @Test
   fun `can respond to request with bodies`() {
     runTest {
-      Http.createServer(
+      createHttpServer(
           InetSocketAddress("localhost", 0),
-          config = HttpServerOptions(preferNativeTransport = false),
+          options = HttpServerOptions(preferNativeTransport = false),
         ) {
           when (it.method) {
             Method.POST -> respond(body = it.body)

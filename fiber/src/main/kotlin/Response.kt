@@ -14,3 +14,17 @@ interface Response {
   /** Body associated with the response. */
   val body: Body
 }
+
+fun respond(
+  body: Body = Body.empty,
+  statusCode: StatusCode = StatusCode.OK,
+  headers: Headers = emptyHeaders(),
+  version: Version = Version.Http11,
+): Response {
+  return object : Response {
+    override val version: Version = version
+    override val statusCode: StatusCode = statusCode
+    override val headers: Headers = headers
+    override val body: Body = body
+  }
+}

@@ -4,6 +4,7 @@ import com.sonianurag.fiber.*
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
+import java.net.SocketAddress
 
 internal fun Buf.toNettyByteBuf(ctx: ChannelHandlerContext): ByteBuf {
   val buffer = ctx.alloc().ioBuffer(this.size)
@@ -26,7 +27,7 @@ internal fun Version.toNettyVersion(): HttpVersion {
   }
 }
 
-internal fun HttpRequest.toRequest(body: Body): Request {
+internal fun HttpRequest.toRequest(remoteAddress: SocketAddress, body: Body): Request {
   return object : Request {
     override val version: Version = this@toRequest.protocolVersion().toVersion()
     override val method: Method = this@toRequest.method().name().toHttpMethod()
@@ -35,6 +36,7 @@ internal fun HttpRequest.toRequest(body: Body): Request {
       this@toRequest.headers().forEach { entry -> add(entry.key, entry.value) }
     }
     override val body: Body = body
+    override val remoteAddress: SocketAddress = remoteAddress
   }
 }
 

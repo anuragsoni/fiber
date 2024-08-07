@@ -1,5 +1,7 @@
 package com.sonianurag.fiber
 
+import java.net.SocketAddress
+
 /** Interface representing an HTTP request. */
 interface Request {
   /** HTTP version associated with the request. */
@@ -16,4 +18,6 @@ interface Request {
 
   /** Body associated with the request. */
   val body: Body
+
+  val remoteAddress: SocketAddress
 }

@@ -2,7 +2,6 @@ package com.sonianurag.fiber.netty.handlers.http1
 
 import com.sonianurag.fiber.Request
 import com.sonianurag.fiber.Response
-import com.sonianurag.fiber.ServerContext
 import com.sonianurag.fiber.netty.PipelineStages
 import com.sonianurag.fiber.netty.utilities.NettyDispatcher
 import io.netty.channel.Channel
@@ -11,7 +10,7 @@ import io.netty.handler.codec.http.HttpRequestDecoder
 import io.netty.handler.codec.http.HttpResponseEncoder
 import io.netty.handler.codec.http.HttpServerExpectContinueHandler
 
-class Http1ServerInitializer(private val service: suspend ServerContext.(Request) -> Response) :
+class Http1ServerInitializer(private val service: suspend (Request) -> Response) :
   ChannelInitializer<Channel>() {
   override fun initChannel(ch: Channel) {
     ch.config().setAutoRead(true)

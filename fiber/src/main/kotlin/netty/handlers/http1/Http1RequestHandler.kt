@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory
 
 class Http1RequestHandler(
   override val coroutineContext: CoroutineContext,
-  private val service: suspend ServerContext.(Request) -> Response,
+  private val service: suspend (Request) -> Response,
 ) : ChannelInboundHandlerAdapter(), CoroutineScope {
   private val logger: Logger = LoggerFactory.getLogger(Http1RequestHandler::class.java)
 
@@ -105,16 +105,19 @@ class Http1RequestHandler(
           null
         }
       val request =
-        msg.toRequest(StreamingBody(size = size, reads = createBodyStream(ctx, bodyChannel)))
+        msg.toRequest(
+          remoteAddress = ctx.channel().remoteAddress(),
+          StreamingBody(size = size, reads = createBodyStream(ctx, bodyChannel)),
+        )
       launch {
-        val response = with(NettyHttp1ServerContext(request, ctx.channel())) { service(request) }
+        val response = service(request)
         sendResponse(ctx, response)
         bodyHandler.drain()
       }
     } else {
-      val request = msg.toRequest(Body.empty)
+      val request = msg.toRequest(remoteAddress = ctx.channel().remoteAddress(), Body.empty)
       launch {
-        val response = with(NettyHttp1ServerContext(request, ctx.channel())) { service(request) }
+        val response = service(request)
         sendResponse(ctx, response)
       }
     }

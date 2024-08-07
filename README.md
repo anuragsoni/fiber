@@ -16,7 +16,7 @@ import kotlinx.coroutines.runBlocking
 fun main() {
     runBlocking {
         val server =
-            Http.createServer(InetSocketAddress("localhost", 8080)) { respond("Hello World".toBody()) }
+            createHttpServer(InetSocketAddress("localhost", 8080)) { respond("Hello World".toBody()) }
         server.closed().await()
     }
 }
